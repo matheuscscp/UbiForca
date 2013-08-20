@@ -4,7 +4,6 @@ import java.util.HashMap;
 
 import org.unbiquitous.ubiengine.game.UosGame;
 
-
 public final class UbiForca extends UosGame {
   public HashMap<String, Object> getSettings() {
     HashMap<String, Object> prop = new HashMap<String, Object>();
