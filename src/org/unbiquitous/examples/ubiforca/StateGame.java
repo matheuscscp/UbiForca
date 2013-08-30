@@ -7,18 +7,20 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.Random;
 
 import org.unbiquitous.ubiengine.game.state.GameState;
-import org.unbiquitous.ubiengine.resources.input.InputManager;
-import org.unbiquitous.ubiengine.resources.input.InputManager.KeyEvent;
+import org.unbiquitous.ubiengine.resources.input.keyboard.KeyboardDevice;
+import org.unbiquitous.ubiengine.resources.input.keyboard.KeyboardDevice.KeyEvent;
+import org.unbiquitous.ubiengine.resources.input.keyboard.KeyboardManager;
 import org.unbiquitous.ubiengine.resources.video.Screen;
 import org.unbiquitous.ubiengine.resources.video.texture.Sprite;
-import org.unbiquitous.ubiengine.util.SingletonContainer;
+import org.unbiquitous.ubiengine.util.ComponentContainer;
 import org.unbiquitous.ubiengine.util.observer.Event;
 import org.unbiquitous.ubiengine.util.observer.MissingEventType;
-
 
 public final class StateGame extends GameState {
   private Sprite bg;
@@ -30,11 +32,12 @@ public final class StateGame extends GameState {
   private boolean win;
   private Sprite win_sprite;
   private Sprite lose_sprite;
+  private Queue<KeyboardDevice> external_keyboards = new LinkedList<KeyboardDevice>();
   
-  public StateGame(SingletonContainer singletons) {
-    super(singletons);
+  public StateGame(ComponentContainer components) {
+    super(components);
     
-    Screen screen = singletons.get(Screen.class);
+    Screen screen = components.get(Screen.class);
     
     screen.showFPS(true);
     bg = new Sprite(screen, "img/bg.png");
@@ -45,8 +48,12 @@ public final class StateGame extends GameState {
     lose_sprite = new Sprite(screen, "img/lose.png");
     
     try {
-      singletons.get(InputManager.class)
-      .connect(InputManager.KEYDOWN, this, StateGame.class.getDeclaredMethod("keyPressed", Event.class));
+      components.get(KeyboardManager.class).getMainKeyboard()
+      .connect(
+        KeyboardDevice.KEYDOWN,
+        this,
+        StateGame.class.getDeclaredMethod("keyPressed", Event.class)
+      );
     } catch (NoSuchMethodException e) {
     } catch (SecurityException e) {
     } catch (MissingEventType e) {
@@ -95,7 +102,7 @@ public final class StateGame extends GameState {
     int i = 1;
     while (true) {
       try {
-        tmp.add(new Sprite(singletons.get(Screen.class), String.format("img/%d.png", i++)));
+        tmp.add(new Sprite(components.get(Screen.class), String.format("img/%d.png", i++)));
       }
       catch (Error e) {
         break;
@@ -119,7 +126,29 @@ public final class StateGame extends GameState {
   }
   
   public void input() {
+    Queue<KeyboardDevice> tmp = new LinkedList<KeyboardDevice>();
     
+    KeyboardManager keyboard_manager = components.get(KeyboardManager.class);
+    while (!external_keyboards.isEmpty()) {
+      KeyboardDevice keyboard = external_keyboards.poll();
+      if (!keyboard_manager.isDevicePlugged(keyboard)) {
+        tmp.add(keyboard);
+        continue;
+      }
+      
+      try {
+        keyboard.connect(
+          KeyboardDevice.KEYDOWN,
+          this,
+          StateGame.class.getDeclaredMethod("keyPressed", Event.class)
+        );
+      } catch (NoSuchMethodException e) {
+      } catch (SecurityException e) {
+      } catch (MissingEventType e) {
+      }
+    }
+    
+    external_keyboards = tmp;
   }
 
   public void keyPressed(Event event) {
@@ -183,7 +212,7 @@ public final class StateGame extends GameState {
     }
     if (!underline)
       win = true;
-    singletons.get(Screen.class).renderText(tmp, new Font(Font.MONOSPACED, Font.BOLD, 30), 512, 580, true);
+    components.get(Screen.class).renderText(tmp, new Font(Font.MONOSPACED, Font.BOLD, 30), 512, 580, true);
   }
   
   private void renderAlphabet() {
@@ -192,6 +221,11 @@ public final class StateGame extends GameState {
       if (!keys[(int) (c - 'A')])
         tmp += c + " ";
     }
-    singletons.get(Screen.class).renderText(tmp, new Font(Font.MONOSPACED, Font.BOLD, 22), 512, 680, true);
+    components.get(Screen.class).renderText(tmp, new Font(Font.MONOSPACED, Font.BOLD, 22), 512, 680, true);
+  }
+  
+  protected void handleNewKeyboardDevice(KeyboardDevice keyboard_device) {
+    components.get(KeyboardManager.class).sendRequest(keyboard_device);
+    external_keyboards.add(keyboard_device);
   }
 }
