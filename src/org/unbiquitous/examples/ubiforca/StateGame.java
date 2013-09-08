@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Random;
 
+import org.unbiquitous.ubiengine.game.state.GameStateArgs;
 import org.unbiquitous.ubiengine.game.state.GameState;
 import org.unbiquitous.ubiengine.resources.input.keyboard.KeyboardDevice;
 import org.unbiquitous.ubiengine.resources.input.keyboard.KeyboardDevice.KeyEvent;
@@ -20,7 +21,6 @@ import org.unbiquitous.ubiengine.resources.video.Screen;
 import org.unbiquitous.ubiengine.resources.video.texture.Sprite;
 import org.unbiquitous.ubiengine.util.ComponentContainer;
 import org.unbiquitous.ubiengine.util.observer.Event;
-import org.unbiquitous.ubiengine.util.observer.MissingEventType;
 
 public final class StateGame extends GameState {
   private Sprite bg;
@@ -34,9 +34,11 @@ public final class StateGame extends GameState {
   private Sprite lose_sprite;
   private Queue<KeyboardDevice> external_keyboards = new LinkedList<KeyboardDevice>();
   
-  public StateGame(ComponentContainer components) {
-    super(components);
-    
+  public StateGame(ComponentContainer components, GameStateArgs args) throws NoSuchMethodException {
+    super(components, args);
+  }
+
+  public void init(GameStateArgs args) {
     Screen screen = components.get(Screen.class);
     
     screen.showFPS(true);
@@ -56,10 +58,13 @@ public final class StateGame extends GameState {
       );
     } catch (NoSuchMethodException e) {
     } catch (SecurityException e) {
-    } catch (MissingEventType e) {
     }
     
     reset();
+  }
+  
+  public void close() {
+    
   }
   
   private void loadWords() {
@@ -144,7 +149,6 @@ public final class StateGame extends GameState {
         );
       } catch (NoSuchMethodException e) {
       } catch (SecurityException e) {
-      } catch (MissingEventType e) {
       }
     }
     
