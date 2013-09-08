@@ -34,7 +34,7 @@ public final class StateGame extends GameState {
   private Sprite lose_sprite;
   private Queue<KeyboardDevice> external_keyboards = new LinkedList<KeyboardDevice>();
   
-  public StateGame(ComponentContainer components, GameStateArgs args) throws NoSuchMethodException {
+  public StateGame(ComponentContainer components, GameStateArgs args) {
     super(components, args);
   }
 
