@@ -133,10 +133,9 @@ public final class StateGame extends GameState {
   public void input() {
     Queue<KeyboardDevice> tmp = new LinkedList<KeyboardDevice>();
     
-    KeyboardManager keyboard_manager = components.get(KeyboardManager.class);
     while (!external_keyboards.isEmpty()) {
       KeyboardDevice keyboard = external_keyboards.poll();
-      if (!keyboard_manager.isDevicePlugged(keyboard)) {
+      if (!keyboard.isPlugged()) {
         tmp.add(keyboard);
         continue;
       }
@@ -216,7 +215,7 @@ public final class StateGame extends GameState {
     }
     if (!underline)
       win = true;
-    components.get(Screen.class).renderText(tmp, new Font(Font.MONOSPACED, Font.BOLD, 30), 512, 580, true);
+    components.get(Screen.class).renderText(tmp, new Font(Font.MONOSPACED, Font.BOLD, 30), null, 512, 580, true);
   }
   
   private void renderAlphabet() {
@@ -225,7 +224,7 @@ public final class StateGame extends GameState {
       if (!keys[(int) (c - 'A')])
         tmp += c + " ";
     }
-    components.get(Screen.class).renderText(tmp, new Font(Font.MONOSPACED, Font.BOLD, 22), 512, 680, true);
+    components.get(Screen.class).renderText(tmp, new Font(Font.MONOSPACED, Font.BOLD, 22), null, 512, 680, true);
   }
   
   protected void handleNewKeyboardDevice(KeyboardDevice keyboard_device) {
