@@ -12,13 +12,14 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Random;
 
-import org.unbiquitous.ubiengine.game.state.GameStateArgs;
 import org.unbiquitous.ubiengine.game.state.GameState;
+import org.unbiquitous.ubiengine.game.state.GameStateArgs;
 import org.unbiquitous.ubiengine.resources.input.keyboard.KeyboardDevice;
-import org.unbiquitous.ubiengine.resources.input.keyboard.KeyboardDevice.KeyEvent;
+import org.unbiquitous.ubiengine.resources.input.keyboard.KeyboardDevice.KeyDownEvent;
 import org.unbiquitous.ubiengine.resources.input.keyboard.KeyboardManager;
 import org.unbiquitous.ubiengine.resources.video.Screen;
 import org.unbiquitous.ubiengine.resources.video.texture.Sprite;
+import org.unbiquitous.ubiengine.resources.video.texture.Text;
 import org.unbiquitous.ubiengine.util.ComponentContainer;
 import org.unbiquitous.ubiengine.util.observer.Event;
 
@@ -33,6 +34,8 @@ public final class StateGame extends GameState {
   private Sprite win_sprite;
   private Sprite lose_sprite;
   private Queue<KeyboardDevice> external_keyboards = new LinkedList<KeyboardDevice>();
+  private Text text_word;
+  private Text text_alphabet;
   
   public StateGame(ComponentContainer components, GameStateArgs args) {
     super(components, args);
@@ -54,11 +57,14 @@ public final class StateGame extends GameState {
       .connect(
         KeyboardDevice.KEYDOWN,
         this,
-        StateGame.class.getDeclaredMethod("keyPressed", Event.class)
+        StateGame.class.getDeclaredMethod("handleKeyDown", Event.class)
       );
     } catch (NoSuchMethodException e) {
     } catch (SecurityException e) {
     }
+    
+    text_word = new Text(components.get(Screen.class), "", new Font(Font.MONOSPACED, Font.BOLD, 30), null);
+    text_alphabet = new Text(components.get(Screen.class), "", new Font(Font.MONOSPACED, Font.BOLD, 22), null);
     
     reset();
   }
@@ -97,7 +103,7 @@ public final class StateGame extends GameState {
       }
     }
     catch (IOException e) {
-      throw new Error("Arquivo de palavras \"conf/words.txt\" não encontrado!");
+      throw new Error("Arquivo de palavras \"words.txt\" não encontrado!");
     }
   }
   
@@ -144,7 +150,7 @@ public final class StateGame extends GameState {
         keyboard.connect(
           KeyboardDevice.KEYDOWN,
           this,
-          StateGame.class.getDeclaredMethod("keyPressed", Event.class)
+          StateGame.class.getDeclaredMethod("handleKeyDown", Event.class)
         );
       } catch (NoSuchMethodException e) {
       } catch (SecurityException e) {
@@ -154,8 +160,8 @@ public final class StateGame extends GameState {
     external_keyboards = tmp;
   }
 
-  public void keyPressed(Event event) {
-    KeyEvent e = (KeyEvent) event;
+  public void handleKeyDown(Event event) {
+    KeyDownEvent e = (KeyDownEvent) event;
     
     // restart game
     if (win || current_stage == stages.length) {
@@ -215,7 +221,8 @@ public final class StateGame extends GameState {
     }
     if (!underline)
       win = true;
-    components.get(Screen.class).renderText(tmp, new Font(Font.MONOSPACED, Font.BOLD, 30), null, 512, 580, true);
+    text_word.setText(tmp);
+    text_word.render(512, 580, true);
   }
   
   private void renderAlphabet() {
@@ -224,7 +231,8 @@ public final class StateGame extends GameState {
       if (!keys[(int) (c - 'A')])
         tmp += c + " ";
     }
-    components.get(Screen.class).renderText(tmp, new Font(Font.MONOSPACED, Font.BOLD, 22), null, 512, 680, true);
+    text_alphabet.setText(tmp);
+    text_alphabet.render(512, 680, true);
   }
   
   protected void handleNewKeyboardDevice(KeyboardDevice keyboard_device) {
